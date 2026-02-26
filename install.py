@@ -46,7 +46,7 @@ def install_cupy():
         os.system(f'"{sys.executable}" {s_param} -m pip uninstall -y cupy-wheel cupy-cuda102 cupy-cuda110 cupy-cuda111 cupy-cuda11x cupy-cuda12x')
         print("Installing cupy...")
         cuda_ver = get_cuda_ver_from_dir(cuda_home)
-        cupy_package = f"cupy-cuda{cuda_ver}" if cuda_ver is not None else "cupy-wheel"
+        cupy_package = f"cupy-cuda{cuda_ver}" if cuda_ver is not None else "cupy-cuda12x"
         os.system(f'"{sys.executable}" {s_param} -m pip install {cupy_package}')
 
 with open(Path(__file__).parent / "requirements-no-cupy.txt", 'r') as f:
