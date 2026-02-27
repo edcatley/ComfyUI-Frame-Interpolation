@@ -67,20 +67,28 @@ class MakeInterpolationStateList:
         
         
 def get_ckpt_container_path(model_type):
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), config["ckpts_path"], model_type))
+
+def find_ckpt_file(ckpt_name, model_type):
+    """Search all ComfyUI checkpoint paths for an existing model file.
+    Returns the directory containing the file if found, otherwise returns a
+    default path to download into."""
     if COMFY_FOLDER_PATHS_AVAILABLE:
         try:
-            # Use ComfyUI's standard models/checkpoints directory
             checkpoints_paths = folder_paths.get_folder_paths("checkpoints")
             if checkpoints_paths:
-                # Create path: models/checkpoints/vfi_models/{model_type}
-                comfy_vfi_path = os.path.join(checkpoints_paths[0], "vfi_models", model_type)
-                os.makedirs(comfy_vfi_path, exist_ok=True)
-                return os.path.abspath(comfy_vfi_path)
+                for base_path in checkpoints_paths:
+                    candidate = os.path.join(base_path, ckpt_name)
+                    if os.path.exists(candidate):
+                        return base_path
+                # Not found, download into vfi_models subfolder of first path
+                download_path = os.path.join(checkpoints_paths[0], "vfi_models", model_type)
+                os.makedirs(download_path, exist_ok=True)
+                return download_path
         except Exception as e:
             print(f"ComfyUI-Frame-Interpolation: Failed to use ComfyUI folder paths ({e}), falling back to local directory")
-    
-    # Fallback to original behavior
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), config["ckpts_path"], model_type))
+
+    return get_ckpt_container_path(model_type)
 
 def load_file_from_url(url, model_dir=None, progress=True, file_name=None):
     """Load file form http url, will download models if necessary.
@@ -117,7 +125,7 @@ def load_file_from_github_release(model_type, ckpt_name):
     error_strs = []
     for i, base_model_download_url in enumerate(BASE_MODEL_DOWNLOAD_URLS):
         try:
-            return load_file_from_url(base_model_download_url + ckpt_name, get_ckpt_container_path(model_type))
+            return load_file_from_url(base_model_download_url + ckpt_name, find_ckpt_file(ckpt_name, model_type))
         except Exception:
             traceback_str = traceback.format_exc()
             if i < len(BASE_MODEL_DOWNLOAD_URLS) - 1:
